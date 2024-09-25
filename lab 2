@@ -1,0 +1,46 @@
+using Random          # Random number generation
+using Distributions   # Probability distributions
+using Statistics      # Statistical functions
+using Plots           # Plotting
+
+# Set the random seed for reproducibility
+Random.seed!(1)
+
+# Define the showcase distribution
+showcase_dist = truncated(Normal(31000, 4500), lower=5000, upper=42000)
+
+# Set the bid amount
+bid = 35000
+
+# Number of simulation iterations
+n_simulations = 10_000
+
+# Initialize arrays to store winnings and running averages
+winnings = zeros(n_simulations)
+running_avg_winnings = zeros(n_simulations)
+
+# Perform the Monte Carlo simulation
+for i in 1:n_simulations
+    # Sample a showcase value
+    actual_value = rand(showcase_dist)
+    
+    if bid > actual_value
+        # Overbid: automatic loss
+        winnings[i] = 0
+    elseif actual_value - bid <= 250
+        # Within $250: win both showcases
+        winnings[i] = 2 * actual_value
+    else
+        # Probability of winning decreases linearly with the bid distance
+        P_win = bid / actual_value
+        # Expected winnings
+        winnings[i] = P_win * actual_value
+    end
+    
+    # Compute the running average
+    running_avg_winnings[i] = mean(winnings[1:i])
+end
+
+# Plot the running estimate of expected winnings
+plot(1:n_simulations, running_avg_winnings, title="Monte Carlo Estimate of Expected Winnings",
+     xlabel="Iteration", ylabel="Running Average Winnings", legend=false)
